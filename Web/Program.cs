@@ -93,7 +93,11 @@ try
    QuestPDF.Settings.License = LicenseType.Community;
 
    var app = builder.Build();
-	if (usePostgreSql) 
+
+   app.UseDefaultFiles();
+   app.UseStaticFiles();
+
+   if (usePostgreSql) 
 	{
       AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
    }
@@ -133,7 +137,8 @@ try
    app.UseAuthorization();
 
 	app.MapControllers();
-	app.Run();
+   app.MapFallbackToFile("/index.html");
+   app.Run();
 }
 catch (Exception ex)
 {

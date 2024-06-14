@@ -22,6 +22,7 @@ using ApplicationCore.Consts;
 using ApplicationCore.Models;
 using System.Collections.Generic;
 using ApplicationCore.Services;
+using System.Web;
 
 namespace Web.Controllers.Api.Files
 {
@@ -62,7 +63,8 @@ namespace Web.Controllers.Api.Files
 
       [HttpGet]
       public async Task<ActionResult<JudgebookFilesAdminModel>> Index(int reviewed = -1, int typeId = 0, string courtType = "",
-          string fileNumber = "",  string year = "", string category = "", string num = "", int page = 1, int pageSize = 50)
+          string fileNumber = "",  string year = "", string category = "", string num = "", string createdby = "", 
+          int page = 1, int pageSize = 50)
       {
          JudgebookType? type = null;
          if (typeId > 0)
@@ -89,6 +91,8 @@ namespace Web.Controllers.Api.Files
             await _judgebooksService.FetchAllAsync(include) 
             : await _judgebooksService.FetchAsync(type, include);
 
+         if (!String.IsNullOrEmpty(createdby)) judgebooks = judgebooks.Where(x => x.CreatedBy == User.Id());
+
 
          if (request.Reviewed == 0) judgebooks = judgebooks.Where(x => x.Reviewed == false);
          else if (request.Reviewed == 1) judgebooks = judgebooks.Where(x => x.Reviewed == true);
@@ -98,6 +102,8 @@ namespace Web.Controllers.Api.Files
          
          if (!String.IsNullOrEmpty(request.Year)) judgebooks = judgebooks.Where(x => x.Year == request.Year);
          if (!String.IsNullOrEmpty(request.Category)) judgebooks = judgebooks.Where(x => x.Category == request.Category);
+         if (!String.IsNullOrEmpty(request.Num)) judgebooks = judgebooks.Where(x => x.Num == request.Num);
+
          if (!String.IsNullOrEmpty(request.Num)) judgebooks = judgebooks.Where(x => x.Num == request.Num);
 
          var pagedList = judgebooks.GetOrdered().GetPagedList(_mapper, page, pageSize);
@@ -158,6 +164,7 @@ namespace Web.Controllers.Api.Files
          var cloneEntity = entity.CloneEntity();
 
          model.SetValuesTo(entity);
+         entity.Type = type!;
          entity.SetUpdated(User.Id());
 
          if (entity.Reviewed && !CanReview()) return Forbid();
@@ -217,7 +224,7 @@ namespace Web.Controllers.Api.Files
       {
          string folderPath = entry.CourtType;
          string ext = Path.GetExtension(file.FileName);
-         string fileName = entry.CreateFileName() + ext;   //$"{entry.Year}_{entry.Category}_{entry.Num}";
+         string fileName =  entry.CreateFileName() + ext;   //$"{entry.Year}_{entry.Category}_{entry.Num}";
 
          return _fileStoragesService.Create(file, folderPath, fileName);
       }
