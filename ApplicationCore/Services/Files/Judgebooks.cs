@@ -5,6 +5,7 @@ using ApplicationCore.Specifications;
 using Ardalis.Specification;
 using Infrastructure.Consts;
 using Infrastructure.Entities;
+using Infrastructure.Helpers;
 using Infrastructure.Interfaces;
 using Microsoft.Extensions.Options;
 using System;
@@ -13,12 +14,16 @@ namespace ApplicationCore.Services.Files;
 
 public interface IJudgebookFilesService
 {
+   Task<IEnumerable<Department>> FetchDepartmentsAsync();
    Task<IEnumerable<JudgebookType>> FetchTypesAsync();
+   Task<Department?> GetDepartmentByIdAsync(int id);
    Task<JudgebookType?> GetTypeByIdAsync(int id);
 
    Task<IEnumerable<JudgebookFile>> FetchAllAsync(string include = "");
 
    Task<IEnumerable<JudgebookFile>> FetchAsync(JudgebookType type, string include = "");
+   Task<IEnumerable<JudgebookFile>> FetchAsync(Department department, string include = "");
+   Task<IEnumerable<JudgebookFile>> FetchAsync(JudgebookType type, Department department, string include = "");
    Task<IEnumerable<JudgebookFile>> FetchAsync(IEnumerable<int> ids, string include = "");
    Task<JudgebookFile?> GetByIdAsync(int id, string include = "");
 
@@ -26,6 +31,7 @@ public interface IJudgebookFilesService
 
    Task<JudgebookFile?> CreateAsync(JudgebookFile judgebook, string ip);
    Task UpdateAsync(JudgebookFile judgebook, string ip);
+   Task RemoveAsync(JudgebookFile judgebook, string userId, string ip);
 
    Task ReviewRangeAsync(IEnumerable<JudgebookFile> judgebooks, string userId, string ip);
 
@@ -37,16 +43,22 @@ public class JudgebooksService : BaseService, IJudgebookFilesService, IBaseServi
 {
    private readonly IDefaultRepository<JudgebookFile> _repository;
    private readonly IDefaultRepository<JudgebookType> _typeRepository;
+   private readonly IDefaultRepository<Department> _departmentsRepository;
 
-   public JudgebooksService(IDefaultRepository<ModifyRecord> modifyRecordrepository, IDefaultRepository<JudgebookFile> repository, IDefaultRepository<JudgebookType> typeRepository)
+   public JudgebooksService(IDefaultRepository<ModifyRecord> modifyRecordrepository, IDefaultRepository<JudgebookFile> repository, 
+      IDefaultRepository<JudgebookType> typeRepository, IDefaultRepository<Department> departmentsRepository)
       :base(modifyRecordrepository) 
    {
       _typeRepository = typeRepository;
       _repository = repository;
+      _departmentsRepository = departmentsRepository;
    }
+   public async Task<IEnumerable<Department>> FetchDepartmentsAsync()
+      => await _departmentsRepository.ListAsync(new DepartmentsSpecification());
    public async Task<IEnumerable<JudgebookType>> FetchTypesAsync()
       => await _typeRepository.ListAsync(new JudgebookTypesSpecification());
-
+   public async Task<Department?> GetDepartmentByIdAsync(int id)
+      => await _departmentsRepository.GetByIdAsync(id);
    public async Task<JudgebookType?> GetTypeByIdAsync(int id)
       => await _typeRepository.GetByIdAsync(id);
    public async Task<IEnumerable<JudgebookFile>> FetchAllAsync(string include = "")
@@ -54,6 +66,10 @@ public class JudgebooksService : BaseService, IJudgebookFilesService, IBaseServi
 
    public async Task<IEnumerable<JudgebookFile>> FetchAsync(JudgebookType type, string include = "")
       => await _repository.ListAsync(new JudgebookFilesSpecification(type, include));
+   public async Task<IEnumerable<JudgebookFile>> FetchAsync(Department department, string include = "")
+      => await _repository.ListAsync(new JudgebookFilesSpecification(department, include));
+   public async Task<IEnumerable<JudgebookFile>> FetchAsync(JudgebookType type, Department department, string include = "")
+      => await _repository.ListAsync(new JudgebookFilesSpecification(type, department, include));
 
    public async Task<IEnumerable<JudgebookFile>> FetchAsync(IEnumerable<int> ids, string include = "")
       => await _repository.ListAsync(new JudgebookFilesSpecification(ids, include));
@@ -95,6 +111,17 @@ public class JudgebooksService : BaseService, IJudgebookFilesService, IBaseServi
       {
          await CreateModifyRecordAsync(ModifyRecord.Create(entity, ActionsTypes.Review, userId, ip));
       }
+   }
+   public async Task RemoveAsync(JudgebookFile entity, string userId, string ip)
+   {
+      var existingEntity = await _repository.GetByIdAsync(entity.Id);
+      entity.Removed = true;
+      entity.SetUpdated(userId);
+
+      await _repository.UpdateAsync(entity);
+
+      var modifyRecord = ModifyRecord.Create(existingEntity!, ActionsTypes.Remove, entity.UpdatedBy!, ip);
+      await CreateModifyRecordAsync(modifyRecord);
    }
 
    public async Task ReviewRangeAsync(IEnumerable<JudgebookFile> judgebooks, string userId, string ip)

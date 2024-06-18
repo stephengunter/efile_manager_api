@@ -14,6 +14,8 @@ public class AuthToken : EntityBase
 
    public string? RemoteIpAddress { get; set; }
    public string UserName { get; set; } = String.Empty;
+
+   public string JudId { get; set; } = String.Empty;
    public string AdListJson { get; set; } = String.Empty;
 
    public bool Active => DateTime.UtcNow <= Expires;

@@ -11,7 +11,7 @@ public class JudgebookFileViewModel : EntityBaseView, IJudgebookFile, IBaseRecor
 {
    public int TypeId { get; set; }
    public string CourtType { get; set; } = String.Empty;
-   public string? Dpt { get; set; }
+   public int? DepartmentId { get; set; }
    public string Year { get; set; } = String.Empty;
    public string Category { get; set; } = String.Empty;
    public string Num { get; set; } = String.Empty;
@@ -43,6 +43,7 @@ public class JudgebookFileViewModel : EntityBaseView, IJudgebookFile, IBaseRecor
    public string LastUpdatedText => LastUpdated.ToDateTimeString();
 
    public JudgebookTypeViewModel? Type { get; set; }
+   public DepartmentViewModel? Department { get; set; }
    public BaseFileView? FileView { get; set; }
 
 
@@ -68,8 +69,21 @@ public class JudgebookTypeViewModel : EntityBaseView, IBaseCategoryView<Judgeboo
    public bool Active { get; set; }
 }
 
+public class DepartmentViewModel : EntityBaseView
+{
+   public string Title { get; set; } = String.Empty;
+   public string Key { get; set; } = String.Empty;
+   public string CourtTypes { get; set; } = String.Empty;
+   public bool Removed { get; set; }
+   public int Order { get; set; }
+   public bool Active { get; set; }
+
+   public ICollection<string> CourtTypeList => CourtTypes.SplitToList();
+}
+
 public abstract class BaseJudgebookRequest
 {
+   public int? DepartmentId { get; set; }
    public int TypeId { get; set; }
    public string? FileNumber { get; set; } = String.Empty;
    public string OriginType { get; set; } = String.Empty;
@@ -83,6 +97,6 @@ public abstract class BaseJudgebookRequest
    public IFormFile? File { get; set; }
 
    public bool HasFile => File != null;
-   public JudgebookFile CreateEntity(JudgebookType type)
-      => new JudgebookFile(type, JudgeDate, FileNumber, CourtType, Year, Category, Num, Ps);
+   public JudgebookFile CreateEntity(Department? department, JudgebookType type)
+      => new JudgebookFile(department, type, JudgeDate, FileNumber, CourtType, Year, Category, Num, Ps);
 }

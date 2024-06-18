@@ -11,6 +11,7 @@ public enum AppRoles
 	Boss,
 	Dev,
    IT,
+   ChiefClerk,//紀錄科長
    Clerk,//書記官
    Recorder,
    Files //檔案管理

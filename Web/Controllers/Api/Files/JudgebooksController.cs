@@ -23,6 +23,7 @@ using ApplicationCore.Models;
 using System.Collections.Generic;
 using ApplicationCore.Services;
 using System.Web;
+using System.Collections.ObjectModel;
 
 namespace Web.Controllers.Api.Files
 {
@@ -62,7 +63,7 @@ namespace Web.Controllers.Api.Files
       string ReportTitle => $"{_companySettings.Title}{_judgebookSettings.Title}";
 
       [HttpGet]
-      public async Task<ActionResult<JudgebookFilesAdminModel>> Index(int reviewed = -1, int typeId = 0, string courtType = "",
+      public async Task<ActionResult<JudgebookFilesAdminModel>> Index(int reviewed = -1, int? departmentId = 0, int typeId = 0, string courtType = "",
           string fileNumber = "",  string year = "", string category = "", string num = "", string createdby = "", 
           int page = 1, int pageSize = 50)
       {
@@ -76,8 +77,18 @@ namespace Web.Controllers.Api.Files
                return BadRequest(ModelState);
             }
          }
+         Department? department = null;
+         if (departmentId > 0)
+         {
+            department = await _judgebooksService.GetDepartmentByIdAsync(departmentId.Value);
+            if (department == null)
+            {
+               ModelState.AddModelError("departmentId", $"Department ¤£¦s¦b Id: ${departmentId}");
+               return BadRequest(ModelState);
+            }
+         }
          int judgeDate = 0;
-         var request = new JudgebookFilesAdminRequest(new JudgebookFile(type, judgeDate, fileNumber, courtType, year, category, num), reviewed, page, pageSize);
+         var request = new JudgebookFilesAdminRequest(new JudgebookFile(department, type, judgeDate, fileNumber, courtType, year, category, num), reviewed, page, pageSize);
          
          var actions = new List<string>();
          if (CanReview()) actions.Add(ActionsTypes.Review);
@@ -86,13 +97,20 @@ namespace Web.Controllers.Api.Files
          model.AllowEmptyJudgeDate = _judgebookSettings.AllowEmptyJudgeDate;
 
 
-         string include = "type";
-         var judgebooks = type == null ? 
-            await _judgebooksService.FetchAllAsync(include) 
-            : await _judgebooksService.FetchAsync(type, include);
+         string include = "type,department";
+         IEnumerable<JudgebookFile> judgebooks;
+         if (type != null)
+         {
+            if (department != null) judgebooks = await _judgebooksService.FetchAsync(type, department, include);
+            else judgebooks = await _judgebooksService.FetchAsync(type!, include);
+         }
+         else 
+         {
+            if (department != null) judgebooks = await _judgebooksService.FetchAsync(department, include);
+            else judgebooks = await _judgebooksService.FetchAllAsync(include);
+         }
 
          if (!String.IsNullOrEmpty(createdby)) judgebooks = judgebooks.Where(x => x.CreatedBy == User.Id());
-
 
          if (request.Reviewed == 0) judgebooks = judgebooks.Where(x => x.Reviewed == false);
          else if (request.Reviewed == 1) judgebooks = judgebooks.Where(x => x.Reviewed == true);
@@ -102,8 +120,6 @@ namespace Web.Controllers.Api.Files
          
          if (!String.IsNullOrEmpty(request.Year)) judgebooks = judgebooks.Where(x => x.Year == request.Year);
          if (!String.IsNullOrEmpty(request.Category)) judgebooks = judgebooks.Where(x => x.Category == request.Category);
-         if (!String.IsNullOrEmpty(request.Num)) judgebooks = judgebooks.Where(x => x.Num == request.Num);
-
          if (!String.IsNullOrEmpty(request.Num)) judgebooks = judgebooks.Where(x => x.Num == request.Num);
 
          var pagedList = judgebooks.GetOrdered().GetPagedList(_mapper, page, pageSize);
@@ -117,11 +133,12 @@ namespace Web.Controllers.Api.Files
          return model;
       }
 
-      [HttpGet("types")]
-      public async Task<ActionResult<IEnumerable<JudgebookTypeViewModel>>> Types()
+      [HttpGet("init")]
+      public async Task<ActionResult<JudgebookFilesIniAdminModel>> Init()
       {
          var types = await _judgebooksService.FetchTypesAsync();
-         return types.MapViewModelList(_mapper);
+         var departments = await _judgebooksService.FetchDepartmentsAsync();
+         return new JudgebookFilesIniAdminModel(departments.GetOrdered().MapViewModelList(_mapper), types.GetOrdered().MapViewModelList(_mapper));
       }
 
 
@@ -142,12 +159,13 @@ namespace Web.Controllers.Api.Files
       bool CanEdit(IJudgebookFile entity)
       {
          if (CanReview()) return true;
-
          if (entity.Reviewed) return false;
+
+         if(User.HasRole(AppRoles.ChiefClerk)) return true;
          return entity.CreatedBy == User.Id();
       }
       bool CanDownload(IJudgebookFile entity) => CanEdit(entity);
-      bool CanReview() => User.IsFileManager() || User.IsDev();
+      bool CanReview() => User.HasRole(AppRoles.Files) || User.HasRole(AppRoles.Dev);
 
       [HttpPut("{id}")]
       public async Task<ActionResult> Update(int id, [FromForm] JudgebookUpdateRequest model)
@@ -222,7 +240,7 @@ namespace Web.Controllers.Api.Files
 
       string SaveFile(IFormFile file, JudgebookFile entry)
       {
-         string folderPath = entry.CourtType;
+         string folderPath = entry.Department == null ? entry.CourtType : Path.Combine(entry.CourtType, entry.Department.Key);
          string ext = Path.GetExtension(file.FileName);
          string fileName =  entry.CreateFileName() + ext;   //$"{entry.Year}_{entry.Category}_{entry.Num}";
 
@@ -232,8 +250,9 @@ namespace Web.Controllers.Api.Files
       async Task<JudgebookFileUploadResponse> AddOneAsync(JudgebookUploadRequest request, string ip)
       {
          var result = new JudgebookFileUploadResponse() { id = request.Id };
+         var department = request.DepartmentId.HasValue ? await _judgebooksService.GetDepartmentByIdAsync(request.DepartmentId.Value) : null;
          var type = await _judgebooksService.GetTypeByIdAsync(request.TypeId);
-         var entry = request.CreateEntity(type!);
+         var entry = request.CreateEntity(department, type!);
          var file = request.File;
 
          var modelErrors = await ValidateModelAsync(entry);
@@ -446,12 +465,10 @@ namespace Web.Controllers.Api.Files
 
          if (!CanEdit(entity)) return Forbid();
 
-         string ip = RemoteIpAddress;
-
          entity.Removed = true;
          MoveFile(entity, removed: true);
 
-         await _judgebooksService.UpdateAsync(entity, ip);
+         await _judgebooksService.RemoveAsync(entity, User.Id(), RemoteIpAddress);
          return NoContent();
       }
       string MoveFile(JudgebookFile entity, bool removed)

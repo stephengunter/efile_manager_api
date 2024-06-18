@@ -4,13 +4,16 @@ namespace Infrastructure.Helpers;
 
 public static class ObjectsHelpers
 {
-   public static void SetValuesTo(this object source, object dest)
+   public static void SetValuesTo(this object source, object dest, ICollection<string>? excepts = null)
    {
       var sourceProperties = source.GetType().GetProperties();
       var destProperties = dest.GetType().GetProperties();
-
+      
       foreach (var sourceProperty in sourceProperties)
       {
+         // Skip properties listed in the excepts collection
+         if (excepts.HasItems() && excepts.Contains(sourceProperty.Name)) continue;
+
          var destProperty = destProperties.FirstOrDefault(p => p.Name == sourceProperty.Name);
          if (destProperty != null && destProperty.CanWrite)
          {

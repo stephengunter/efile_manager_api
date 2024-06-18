@@ -12,20 +12,27 @@ using ApplicationCore.Helpers;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Azure.Core;
+using ApplicationCore.Services.Files;
+using ApplicationCore.Helpers.Files;
 
 namespace Web.Controllers.Tests;
 
 public class ATestsController : BaseTestController
 {
-
-   public ATestsController()
+   
+   private readonly IJudgebookFilesService _judgebooksService;
+   private readonly IMapper _mapper;
+   public ATestsController(IJudgebookFilesService judgebooksService, IMapper mapper)
    {
-     
+      _judgebooksService = judgebooksService;
+      _mapper = mapper;
    }
    [HttpGet]
    public async Task<ActionResult> Index()
    {
-      return Ok();
+      string includes = "type,department";
+      var list = await _judgebooksService.FetchAsync([1, 24], includes);
+      return Ok(list.MapViewModelList(_mapper));
    }
 
 

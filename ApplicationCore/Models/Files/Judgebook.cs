@@ -4,6 +4,7 @@ using Infrastructure.Helpers;
 using Infrastructure.Entities;
 using Ardalis.Specification;
 using ApplicationCore.Consts;
+using ApplicationCore.Migrations;
 
 namespace ApplicationCore.Models.Files;
 
@@ -11,6 +12,7 @@ public interface IJudgebookFile
 {
    int Id { get; set; }
    public int TypeId { get; set; }
+   public int? DepartmentId { get; set; }
    string CourtType { get; set; }
    string Year { get; set; }
    string Category { get; set; }
@@ -37,8 +39,13 @@ public class JudgebookFile : EntityBase, IJudgebookFile, IBaseUploadFile, IBaseR
    { 
    
    }
-   public JudgebookFile(JudgebookType? type, int judgeDate, string? fileNumber, string courtType = "", string year = "", string category = "", string num = "", string? ps = "")
+   public JudgebookFile(Department? department, JudgebookType? type, int judgeDate, string? fileNumber, string courtType = "", string year = "", string category = "", string num = "", string? ps = "")
    {
+      if (department != null)
+      {
+         Department = department;
+         DepartmentId = department.Id;
+      }
       if (type != null)
       {
          Type = type;
@@ -57,6 +64,9 @@ public class JudgebookFile : EntityBase, IJudgebookFile, IBaseUploadFile, IBaseR
 
    public int TypeId { get; set; }
    public virtual JudgebookType Type { get; set; }
+
+   public int? DepartmentId { get; set; }
+   public virtual Department? Department { get; set; }
    public string? FileNumber { get; set; }
 
    public string CourtType { get; set; } = String.Empty;
@@ -161,6 +171,20 @@ public class JudgebookType : EntityBase, IBaseCategory<JudgebookType>, IRemovabl
    public bool Active => ISortableHelpers.IsActive(this);
 
    public void LoadSubItems(IEnumerable<IBaseCategory<JudgebookType>> types) => BaseCategoriesHelpers.LoadSubItems(this, types);
+}
+
+
+[Table("Files.Departments")]
+public class Department : EntityBase, IRemovable, ISortable
+{
+   public string Title { get; set; } = String.Empty;
+   public string Key { get; set; } = String.Empty;
+   public string CourtTypes { get; set; } = String.Empty;
+
+   public bool Removed { get; set; }
+   public int Order { get; set; }
+
+   public bool Active => ISortableHelpers.IsActive(this);
 }
 
 

@@ -1,4 +1,5 @@
-﻿using ApplicationCore.Models.Files;
+﻿using ApplicationCore.Migrations;
+using ApplicationCore.Models.Files;
 using ApplicationCore.Views.Files;
 using Azure.Core;
 using Infrastructure.Paging;
@@ -16,6 +17,7 @@ public class JudgebookFilesAdminRequest : BaseJudgebookRequest
       Page = page < 1 ? 1 : page;
       PageSize = pageSize < 1 ? 1 : pageSize;
 
+      DepartmentId = model.DepartmentId;
       TypeId = model.TypeId;
       CourtType = model.CourtType;
       OriginType = model.OriginType;
@@ -55,7 +57,16 @@ public class JudgebookReviewRequest
 
 #endregion
 
-
+public class JudgebookFilesIniAdminModel
+{
+   public JudgebookFilesIniAdminModel(ICollection<DepartmentViewModel> departments, ICollection<JudgebookTypeViewModel> types)
+   {
+      Departments = departments;
+      Types = types;
+   }
+   public ICollection<DepartmentViewModel> Departments { get; set; }
+   public ICollection<JudgebookTypeViewModel> Types { get; set; }
+}
 public class JudgebookFilesAdminModel
 {
    public JudgebookFilesAdminModel(JudgebookFilesAdminRequest request, IEnumerable<string> actions)
@@ -63,6 +74,8 @@ public class JudgebookFilesAdminModel
       Request = request;
       Actions = actions;
    }
+
+   
    public bool AllowEmptyJudgeDate{ get; set; }
    public bool AllowEmptyFileNumber { get; set; }
    public IEnumerable<string> Actions { get; set; }

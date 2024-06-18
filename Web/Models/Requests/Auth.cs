@@ -25,13 +25,12 @@ public class OAuthLoginRequest
 
 public class AuthTokenRequest
 {
+   public string Provider { get; set; } = String.Empty;
    public string Key { get; set; } = String.Empty;
    public string UserName { get; set; } = String.Empty;
 
+   public string JudId { get; set; } = String.Empty;
    public string AdListJson { get; set; } = String.Empty;
-
-   public string Provider { get; set; } = String.Empty;
-
 }
 
 public class AuthTokenLoginRequest

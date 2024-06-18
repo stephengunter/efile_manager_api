@@ -15,6 +15,7 @@ using ApplicationCore.Services.Auth;
 using System.Data;
 using ApplicationCore.Views.Jud;
 using Newtonsoft.Json;
+using System.Net;
 
 namespace Web.Controllers;
 
@@ -48,19 +49,22 @@ public class AuthTokenController : BaseController
 	{
       var provider = model.Provider.ToEnum<AuthProvider>(defaultValue: AuthProvider.Unknown);
 		if (provider == AuthProvider.Unknown) throw new AuthTokenCreateFailedException($"provider: {model.Provider} 不存在");
+      if (provider != AuthProvider.Jud3) throw new AuthTokenCreateFailedException($"invalid provider.");
 
-		int minutes = 5;
+      if (model.Key != _jud3Settings.Key) throw new AuthTokenCreateFailedException($"invalid key.");
 
-      if (provider == AuthProvider.Jud3)
-		{
-			if (model.Key != _jud3Settings.Key) throw new AuthTokenCreateFailedException($"invalid key.");
-			minutes = _jud3Settings.TokenValidMinutes;
-      }
-		else throw new AuthTokenCreateFailedException($"invalid key.");
+      int minutes = _jud3Settings.TokenValidMinutes;
+      var authToken = await _authTokenService.CreateAsync(new AuthToken
+      {
+         UserName = model.UserName,
+         Provider = provider,
 
-      string json = model.AdListJson;
-		string ip = RemoteIpAddress;
-		var authToken = await _authTokenService.CreateAsync(model.UserName, provider, ip, json, minutes);
+         JudId = model.JudId,
+         AdListJson = model.AdListJson,
+         RemoteIpAddress = RemoteIpAddress
+      },
+      minutes
+      ); ; ;
 
       string url = AuthTokenLoginUrl(authToken);
       return new AuthTokenResponse(model.UserName, authToken.Token, url);
@@ -71,10 +75,11 @@ public class AuthTokenController : BaseController
    {
       var provider = model.Provider.ToEnum<AuthProvider>(defaultValue: AuthProvider.Unknown);
       if (provider == AuthProvider.Unknown) throw new AuthTokenCreateFailedException($"provider: {model.Provider} 不存在");
+      if (provider != AuthProvider.Jud3) throw new AuthTokenCreateFailedException("invalid provider");
 
       var entry = await _authTokenService.CheckAsync(model.Token, model.UserName, provider);
-
       if (entry == null) throw new AuthTokenLoginFailedException($"provider: {model.Provider} , user: {model.UserName}");
+
 
       var user = await _usersService.FindByUsernameAsync(model.UserName);
       if (user == null)
@@ -87,22 +92,33 @@ public class AuthTokenController : BaseController
             Active = true
          });
       }
+
+      
       var adUsers = JsonConvert.DeserializeObject<List<AdUserViewModel>>(entry.AdListJson);
-      if (adUsers.IsNullOrEmpty()) return await CreateAuthResponseAsync(user, adUsers);
 
-
-      var roles = adUsers!.Select(item => item.ResolveRole()).Distinct();
-      if (roles.HasItems())
+      AppRoles role = ResolveRoleById(entry.JudId);
+      if (role != AppRoles.UnKnown)
       {
-         foreach (var role in roles )
+         await AddToRoleAsync(user, role.ToString());
+      }
+      else
+      {
+         if (adUsers!.HasItems())
          {
-            if (role != AppRoles.UnKnown)
+            var roles = adUsers!.Select(item => item.ResolveRole()).Distinct();
+            if (roles.HasItems())
             {
-               var hasRole = await _usersService.HasRoleAsync(user, role.ToString());
-               if (!hasRole) await _usersService.AddToRoleAsync(user, role.ToString());
+               foreach (var appRole in roles)
+               {
+                  if (appRole != AppRoles.UnKnown) await AddToRoleAsync(user, appRole.ToString());
+               }
             }
          }
+
       }
+
+
+      if (adUsers.IsNullOrEmpty()) return await CreateAuthResponseAsync(user, adUsers);
 
       var profile = await _profilesService.FindAsync(user);
       if (profile == null)
@@ -119,6 +135,12 @@ public class AuthTokenController : BaseController
       return await CreateAuthResponseAsync(user, adUsers);
    }
 
+   async Task AddToRoleAsync(User user, string role)
+   {
+      var hasRole = await _usersService.HasRoleAsync(user, role);
+      if (!hasRole) await _usersService.AddToRoleAsync(user, role);
+   }
+
    async Task<AuthResponse> CreateAuthResponseAsync(User user, IList<AdUserViewModel>? adUsers)
    {
       var roles = await _usersService.GetRolesAsync(user);
@@ -129,6 +151,20 @@ public class AuthTokenController : BaseController
       string refreshToken = await _jwtTokenService.CreateRefreshTokenAsync(RemoteIpAddress, user);
 
       return new AuthResponse(accessToken.Token, accessToken.ExpiresIn, refreshToken);
+   }
+
+   AppRoles ResolveRoleById(string auth_id)
+   {
+      if (auth_id == "F") return AppRoles.Files;
+      if (auth_id == "S") return AppRoles.Files;
+
+      var num = auth_id.ToInt();
+
+      if (num == 3) return AppRoles.Clerk;
+      if (num == 4) return AppRoles.Recorder;
+      if (num == 8) return AppRoles.ChiefClerk;
+
+      return AppRoles.UnKnown;
    }
 
 }

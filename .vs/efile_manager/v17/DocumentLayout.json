@@ -3,8 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C2FD3AF5-6BD6-42D6-A713-E8710F9030E6}|Web\\Web.csproj|c:\\users\\administrator\\source\\repos\\csharp\\efile_manager_api\\web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C2FD3AF5-6BD6-42D6-A713-E8710F9030E6}|Web\\Web.csproj|solutionrelative:web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C2FD3AF5-6BD6-42D6-A713-E8710F9030E6}|Web\\Web.csproj|c:\\users\\administrator\\source\\repos\\csharp\\efile_manager_api\\web\\controllers\\api\\files\\judgebookscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C2FD3AF5-6BD6-42D6-A713-E8710F9030E6}|Web\\Web.csproj|solutionrelative:web\\controllers\\api\\files\\judgebookscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99FCF4DA-33E2-49A3-858D-9E5ECD1DB62D}|ApplicationCore\\ApplicationCore.csproj|c:\\users\\administrator\\source\\repos\\csharp\\efile_manager_api\\applicationcore\\services\\files\\judgebooks.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99FCF4DA-33E2-49A3-858D-9E5ECD1DB62D}|ApplicationCore\\ApplicationCore.csproj|solutionrelative:applicationcore\\services\\files\\judgebooks.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99FCF4DA-33E2-49A3-858D-9E5ECD1DB62D}|ApplicationCore\\ApplicationCore.csproj|c:\\users\\administrator\\source\\repos\\csharp\\efile_manager_api\\applicationcore\\helpers\\models\\files\\judgebook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99FCF4DA-33E2-49A3-858D-9E5ECD1DB62D}|ApplicationCore\\ApplicationCore.csproj|solutionrelative:applicationcore\\helpers\\models\\files\\judgebook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99FCF4DA-33E2-49A3-858D-9E5ECD1DB62D}|ApplicationCore\\ApplicationCore.csproj|c:\\users\\administrator\\source\\repos\\csharp\\efile_manager_api\\applicationcore\\models\\files\\judgebook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99FCF4DA-33E2-49A3-858D-9E5ECD1DB62D}|ApplicationCore\\ApplicationCore.csproj|solutionrelative:applicationcore\\models\\files\\judgebook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -13,20 +25,59 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "DockedWidth": 190,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\Web\\Program.cs",
-              "RelativeDocumentMoniker": "Web\\Program.cs",
-              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\Web\\Program.cs",
-              "RelativeToolTip": "Web\\Program.cs",
-              "ViewState": "AQIAAGgAAAAAAAAAAAAAAHoAAAAFAAAA",
+              "DocumentIndex": 1,
+              "Title": "Judgebooks.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\ApplicationCore\\Services\\Files\\Judgebooks.cs",
+              "RelativeDocumentMoniker": "ApplicationCore\\Services\\Files\\Judgebooks.cs",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\ApplicationCore\\Services\\Files\\Judgebooks.cs",
+              "RelativeToolTip": "ApplicationCore\\Services\\Files\\Judgebooks.cs",
+              "ViewState": "AQIAAG0AAAAAAAAAAAAcwIQAAAAoAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-06-14T03:28:04.328Z",
+              "WhenOpened": "2024-06-18T09:07:26.45Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "JudgebooksController.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\Web\\Controllers\\Api\\Files\\JudgebooksController.cs",
+              "RelativeDocumentMoniker": "Web\\Controllers\\Api\\Files\\JudgebooksController.cs",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\Web\\Controllers\\Api\\Files\\JudgebooksController.cs",
+              "RelativeToolTip": "Web\\Controllers\\Api\\Files\\JudgebooksController.cs",
+              "ViewState": "AQIAAMQBAAAAAAAAAAAQwMkBAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-18T09:00:49.728Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Judgebook.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\ApplicationCore\\Models\\Files\\Judgebook.cs",
+              "RelativeDocumentMoniker": "ApplicationCore\\Models\\Files\\Judgebook.cs",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\ApplicationCore\\Models\\Files\\Judgebook.cs",
+              "RelativeToolTip": "ApplicationCore\\Models\\Files\\Judgebook.cs",
+              "ViewState": "AQIAAAkAAAAAAAAAAAAAAA4AAAAZAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-18T08:59:11.155Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Judgebook.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\ApplicationCore\\Helpers\\Models\\Files\\Judgebook.cs",
+              "RelativeDocumentMoniker": "ApplicationCore\\Helpers\\Models\\Files\\Judgebook.cs",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\csharp\\efile_manager_api\\ApplicationCore\\Helpers\\Models\\Files\\Judgebook.cs",
+              "RelativeToolTip": "ApplicationCore\\Helpers\\Models\\Files\\Judgebook.cs",
+              "ViewState": "AQIAAEYAAAAAAAAAAADwv1IAAABAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-18T08:57:54.48Z",
               "EditorCaption": ""
             }
           ]

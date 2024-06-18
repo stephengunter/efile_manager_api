@@ -82,14 +82,15 @@ public static class JudgebookFileHelpers
 
    public static string CreateFileName(this JudgebookFile entry)
    { 
-      if (entry.Removed) return $"{entry.CourtType}_{entry.Year}_{entry.Category}_{entry.Num}_{entry.Type.Key}";
-      return $"{entry.Year}_{entry.Category}_{entry.Num}_{entry.Type.Key}";
+      if (entry.Removed) return $"{entry.CourtType}_{entry.Year}_{entry.Category}_{entry.Num}";
+      return $"{entry.Year}_{entry.Category}_{entry.Num}";
    }
 
    public static bool IsSameCase(this JudgebookFile entry, IJudgebookFile model)
    { 
-      return (entry.TypeId == model.TypeId) && (entry.CourtType == model.CourtType) && (entry.Year == model.Year) 
-         && (entry.Category == model.Category) && (entry.Num == model.Num);
+      return (entry.DepartmentId == model.DepartmentId) && (entry.TypeId == model.TypeId) && (entry.CourtType == model.CourtType) 
+               && (entry.Year == model.Year) && (entry.Category == model.Category) && (entry.Num == model.Num);
+
    }
 
    public static Dictionary<string, string> Validate(this JudgebookFile model)

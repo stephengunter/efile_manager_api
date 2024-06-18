@@ -36,6 +36,7 @@ public class DefaultContext : IdentityDbContext<User, Role, string,
    public DbSet<Profiles> Profiles => Set<Profiles>();
 
    //Files
+   public DbSet<Department> Departments => Set<Department>();
    public DbSet<JudgebookType> JudgebookTypes => Set<JudgebookType>();
    public DbSet<JudgebookFile> JudgebookFiles => Set<JudgebookFile>();
 
