@@ -33,8 +33,8 @@ public interface IUsersService
    #region Store
    Task<User> CreateAsync(User user);
 	Task UpdateAsync(User user);
-
 	Task AddToRoleAsync(User user, string role);
+   Task RemoveFromRoleAsync(User user, string role);
    #endregion
 
    #region Get
@@ -130,8 +130,17 @@ public class UsersService : IUsersService
 
          throw new UpdateUserRoleException(user, role, msg);
       }
+   }
+   public async Task RemoveFromRoleAsync(User user, string role)
+   {
+      var result = await _userManager.RemoveFromRoleAsync(user, role);
+      if (!result.Succeeded)
+      {
+         var error = result.Errors.FirstOrDefault();
+         string msg = $"{error!.Code} : {error!.Description}" ?? string.Empty;
 
-		
+         throw new UpdateUserRoleException(user, role, msg);
+      }
    }
 
    #endregion

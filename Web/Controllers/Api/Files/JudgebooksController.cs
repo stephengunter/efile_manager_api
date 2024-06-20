@@ -166,6 +166,7 @@ namespace Web.Controllers.Api.Files
       }
       bool CanDownload(IJudgebookFile entity) => CanEdit(entity);
       bool CanReview() => User.HasRole(AppRoles.Files) || User.HasRole(AppRoles.Dev);
+      bool CanReport() => CanReview() || User.HasRole(AppRoles.IT);
 
       [HttpPut("{id}")]
       public async Task<ActionResult> Update(int id, [FromForm] JudgebookUpdateRequest model)
@@ -203,7 +204,7 @@ namespace Web.Controllers.Api.Files
             bool sameCase = entity.IsSameCase(cloneEntity);
             if (!sameCase)
             {
-               string destPath = MoveFile(entity, removed: false);
+               string destPath = await MoveFileAsync(entity, removed: false);
 
                entity.FileName = Path.GetFileName(destPath);
                entity.DirectoryPath = Path.GetDirectoryName(destPath)!;
@@ -211,12 +212,12 @@ namespace Web.Controllers.Api.Files
          }
          else
          {
-            MoveFile(cloneEntity, removed: true);
+            await MoveFileAsync(cloneEntity, removed: true);
 
             try
             {
                var file = model.File;
-               string filePath = SaveFile(file!, entity);
+               string filePath = await SaveFileAsync(file!, entity);
                entity.FileName = Path.GetFileName(filePath);
                entity.Ext = Path.GetExtension(file!.FileName);
                entity.FileSize = file!.Length;
@@ -235,12 +236,20 @@ namespace Web.Controllers.Api.Files
          string ip = RemoteIpAddress;
          await _judgebooksService.UpdateAsync(entity, ip);
 
+         if (entity.Reviewed) await _judgebooksService.ReviewAsync(entity, User.Id(), RemoteIpAddress);
+
          return Ok(entity.MapViewModel(_mapper));
       }
 
-      string SaveFile(IFormFile file, JudgebookFile entry)
+      async Task<string> SaveFileAsync(IFormFile file, JudgebookFile entry)
       {
-         string folderPath = entry.Department == null ? entry.CourtType : Path.Combine(entry.CourtType, entry.Department.Key);
+         Department? department = null;
+         if (entry.DepartmentId.HasValue && entry.DepartmentId > 0)
+         {
+            department = await _judgebooksService.GetDepartmentByIdAsync(entry.DepartmentId.Value);
+         }
+
+         string folderPath = department == null ? entry.CourtType : Path.Combine(entry.CourtType, department.Key);
          string ext = Path.GetExtension(file.FileName);
          string fileName =  entry.CreateFileName() + ext;   //$"{entry.Year}_{entry.Category}_{entry.Num}";
 
@@ -267,7 +276,7 @@ namespace Web.Controllers.Api.Files
 
          try
          {
-            string filePath = SaveFile(file!, entry);
+            string filePath = await SaveFileAsync(file!, entry);
             entry.FileName = Path.GetFileName(filePath);
             entry.Ext = Path.GetExtension(file!.FileName);
 
@@ -344,7 +353,7 @@ namespace Web.Controllers.Api.Files
       [HttpGet("reports")]
       public async Task<ActionResult<ICollection<JudgebookFileReportItem>>> Reports(string createdAt = "", string judgeDate = "")
       {
-         if (!CanReview()) return Forbid();
+         if (!CanReport()) return Forbid();
 
          string include = "type";
          var judgebooks = await _judgebooksService.FetchAllAsync(include);
@@ -396,7 +405,7 @@ namespace Web.Controllers.Api.Files
       [HttpPost("reports")]
       public async Task<IActionResult> Reports(JudgebookReportsRequest request)
       {
-         if (!CanReview()) return Forbid();
+         if (!CanReport()) return Forbid();
          
          if (request.Ids.IsNullOrEmpty())
          {
@@ -466,17 +475,28 @@ namespace Web.Controllers.Api.Files
          if (!CanEdit(entity)) return Forbid();
 
          entity.Removed = true;
-         MoveFile(entity, removed: true);
+         await MoveFileAsync(entity, removed: true);
 
          await _judgebooksService.RemoveAsync(entity, User.Id(), RemoteIpAddress);
          return NoContent();
       }
-      string MoveFile(JudgebookFile entity, bool removed)
+      async Task<string> MoveFileAsync(JudgebookFile entity, bool removed)
       {
+         Department? department = null;
+         if (entity.DepartmentId.HasValue && entity.DepartmentId > 0)
+         {
+            department = await _judgebooksService.GetDepartmentByIdAsync(entity.DepartmentId.Value);
+         }
+
          string sourceFolder = entity.DirectoryPath;
          string sourceFileName = entity.FileName;
 
          string destFolder = removed ? REMOVED : entity.CourtType;
+         if (!removed && department != null)
+         {
+            destFolder = Path.Combine(destFolder, department.Key);
+         }
+         
          string destFileName = entity.CreateFileName() + entity.Ext;
 
          try

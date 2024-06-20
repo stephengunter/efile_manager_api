@@ -33,6 +33,7 @@ public interface IJudgebookFilesService
    Task UpdateAsync(JudgebookFile judgebook, string ip);
    Task RemoveAsync(JudgebookFile judgebook, string userId, string ip);
 
+   Task ReviewAsync(JudgebookFile entity, string userId, string ip);
    Task ReviewRangeAsync(IEnumerable<JudgebookFile> judgebooks, string userId, string ip);
 
    Task AddDownloadRecordAsync(JudgebookFile entity, string userId, string ip);
@@ -121,6 +122,16 @@ public class JudgebooksService : BaseService, IJudgebookFilesService, IBaseServi
       await _repository.UpdateAsync(entity);
 
       var modifyRecord = ModifyRecord.Create(existingEntity!, ActionsTypes.Remove, entity.UpdatedBy!, ip);
+      await CreateModifyRecordAsync(modifyRecord);
+   }
+
+   public async Task ReviewAsync(JudgebookFile entity, string userId, string ip)
+   {
+      var modifyRecord = ModifyRecord.Create(entity, ActionsTypes.Review, userId, ip);
+      entity.Reviewed = true;
+      entity.ReviewedAt = DateTime.Now;
+      entity.ReviewedBy = userId;
+      await _repository.UpdateAsync(entity);
       await CreateModifyRecordAsync(modifyRecord);
    }
 

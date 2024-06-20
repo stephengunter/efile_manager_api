@@ -14,25 +14,23 @@ using Microsoft.AspNetCore.Identity;
 using Azure.Core;
 using ApplicationCore.Services.Files;
 using ApplicationCore.Helpers.Files;
+using ApplicationCore.Consts;
+using System.Data;
 
 namespace Web.Controllers.Tests;
 
 public class ATestsController : BaseTestController
 {
    
-   private readonly IJudgebookFilesService _judgebooksService;
-   private readonly IMapper _mapper;
-   public ATestsController(IJudgebookFilesService judgebooksService, IMapper mapper)
+   public ATestsController()
    {
-      _judgebooksService = judgebooksService;
-      _mapper = mapper;
+      
    }
    [HttpGet]
    public async Task<ActionResult> Index()
    {
-      string includes = "type,department";
-      var list = await _judgebooksService.FetchAsync([1, 24], includes);
-      return Ok(list.MapViewModelList(_mapper));
+     
+      return Ok();
    }
 
 

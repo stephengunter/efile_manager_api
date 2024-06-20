@@ -114,7 +114,6 @@ public class AuthTokenController : BaseController
                }
             }
          }
-
       }
 
 
@@ -156,7 +155,7 @@ public class AuthTokenController : BaseController
    AppRoles ResolveRoleById(string auth_id)
    {
       if (auth_id == "F") return AppRoles.Files;
-      if (auth_id == "S") return AppRoles.Files;
+      if (auth_id == "S") return AppRoles.IT;
 
       var num = auth_id.ToInt();
 
