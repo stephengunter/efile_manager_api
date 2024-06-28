@@ -23,6 +23,13 @@ public static class ClaimsHelpers
       return user.Claims.Find(JwtClaimIdentifiers.Id)?.Value ?? string.Empty;
    }
 
+   public static IEnumerable<int> DepartmentIds(this ClaimsPrincipal user)
+   {
+      var claim = user.FindFirst(JwtClaimIdentifiers.Departments);
+      if (claim != null) return claim.Value.SplitToIntList();
+      return user.Claims.Find(JwtClaimIdentifiers.Departments)?.Value.SplitToIntList() ?? new List<int>();
+   }
+
    public static IEnumerable<string> Roles(this ClaimsPrincipal user)
    {
       var claim = user.FindFirst(ClaimTypes.Role);

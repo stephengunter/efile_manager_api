@@ -9,8 +9,10 @@ namespace Web.Models.Files;
 #region Request
 public class JudgebookFilesAdminRequest : BaseJudgebookRequest
 {
-   public JudgebookFilesAdminRequest(JudgebookFile model, int reviewed, int page = 1, int pageSize = 10)
+   public JudgebookFilesAdminRequest(JudgebookFile model, string? departmentIds, int reviewed, int page = 1, int pageSize = 10)
    {
+      DepartmentIds = departmentIds;
+
       if (reviewed == 0 || reviewed == 1) Reviewed = reviewed;
       else Reviewed = -1;
 
@@ -28,6 +30,8 @@ public class JudgebookFilesAdminRequest : BaseJudgebookRequest
       Num = model.Num;
 
    }
+
+   public string? DepartmentIds { get; set; }
    public int Reviewed { get; set; }
   
    public int Page { get; set; }
@@ -59,11 +63,14 @@ public class JudgebookReviewRequest
 
 public class JudgebookFilesIniAdminModel
 {
-   public JudgebookFilesIniAdminModel(ICollection<DepartmentViewModel> departments, ICollection<JudgebookTypeViewModel> types)
+   public JudgebookFilesIniAdminModel(ICollection<DepartmentViewModel> departments, ICollection<JudgebookTypeViewModel> types, int maxFileSize)
    {
       Departments = departments;
       Types = types;
+      MaxFileSize = maxFileSize;
    }
+
+   public int MaxFileSize { get; set; }
    public ICollection<DepartmentViewModel> Departments { get; set; }
    public ICollection<JudgebookTypeViewModel> Types { get; set; }
 }

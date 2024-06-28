@@ -17,6 +17,8 @@ public interface IJudgebookFilesService
    Task<IEnumerable<Department>> FetchDepartmentsAsync();
    Task<IEnumerable<JudgebookType>> FetchTypesAsync();
    Task<Department?> GetDepartmentByIdAsync(int id);
+
+   Task<Department?> FindDepartmentByTitleAsync(string title);
    Task<JudgebookType?> GetTypeByIdAsync(int id);
 
    Task<IEnumerable<JudgebookFile>> FetchAllAsync(string include = "");
@@ -60,6 +62,12 @@ public class JudgebooksService : BaseService, IJudgebookFilesService, IBaseServi
       => await _typeRepository.ListAsync(new JudgebookTypesSpecification());
    public async Task<Department?> GetDepartmentByIdAsync(int id)
       => await _departmentsRepository.GetByIdAsync(id);
+
+   public async Task<Department?> FindDepartmentByTitleAsync(string title)
+   { 
+      var departments = await _departmentsRepository.ListAsync(new DepartmentsSpecification());
+      return departments.FirstOrDefault(x => x.Title == title);
+   }
    public async Task<JudgebookType?> GetTypeByIdAsync(int id)
       => await _typeRepository.GetByIdAsync(id);
    public async Task<IEnumerable<JudgebookFile>> FetchAllAsync(string include = "")

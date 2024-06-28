@@ -30,6 +30,7 @@ public static class SplitHelpers
 
 	public static string JoinToStringIntegers(this List<int> list, bool greaterThanZero = false)
 	{
+		if (list.IsNullOrEmpty()) return "";
 		if (greaterThanZero) list = list.Where(id => id > 0).ToList();
 		return String.Join(",", list.Select(x => x.ToString()));
 	}

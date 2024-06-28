@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using ApplicationCore.Services;
 using System.Web;
 using System.Collections.ObjectModel;
+using ApplicationCore.Migrations;
 
 namespace Web.Controllers.Api.Files
 {
@@ -63,7 +64,7 @@ namespace Web.Controllers.Api.Files
       string ReportTitle => $"{_companySettings.Title}{_judgebookSettings.Title}";
 
       [HttpGet]
-      public async Task<ActionResult<JudgebookFilesAdminModel>> Index(int reviewed = -1, int? departmentId = 0, int typeId = 0, string courtType = "",
+      public async Task<ActionResult<JudgebookFilesAdminModel>> Index(int reviewed = -1, string? departmentIds = null, int typeId = 0, string courtType = "",
           string fileNumber = "",  string year = "", string category = "", string num = "", string createdby = "", 
           int page = 1, int pageSize = 50)
       {
@@ -78,17 +79,22 @@ namespace Web.Controllers.Api.Files
             }
          }
          Department? department = null;
-         if (departmentId > 0)
+         List<int> department_ids = null;
+         if (!string.IsNullOrEmpty(departmentIds))
          {
-            department = await _judgebooksService.GetDepartmentByIdAsync(departmentId.Value);
-            if (department == null)
+            department_ids = departmentIds.SplitToIntList();
+            if (department_ids.Count == 1)
             {
-               ModelState.AddModelError("departmentId", $"Department 不存在 Id: ${departmentId}");
-               return BadRequest(ModelState);
+               department = await _judgebooksService.GetDepartmentByIdAsync(department_ids[0]);
+               if (department == null)
+               {
+                  ModelState.AddModelError("departmentId", $"Department 不存在 Id: {department_ids[0]}");
+                  return BadRequest(ModelState);
+               }
             }
          }
          int judgeDate = 0;
-         var request = new JudgebookFilesAdminRequest(new JudgebookFile(department, type, judgeDate, fileNumber, courtType, year, category, num), reviewed, page, pageSize);
+         var request = new JudgebookFilesAdminRequest(new JudgebookFile(department, type, judgeDate, fileNumber, courtType, year, category, num), department_ids!.JoinToStringIntegers(true), reviewed, page, pageSize);
          
          var actions = new List<string>();
          if (CanReview()) actions.Add(ActionsTypes.Review);
@@ -116,6 +122,11 @@ namespace Web.Controllers.Api.Files
          else if (request.Reviewed == 1) judgebooks = judgebooks.Where(x => x.Reviewed == true);
 
          if (!String.IsNullOrEmpty(request.CourtType)) judgebooks = judgebooks.Where(x => x.CourtType == request.CourtType);
+         if (department_ids.HasItems() && department == null)
+         {
+            judgebooks = judgebooks.Where(x => x.DepartmentId.HasValue && department_ids.Contains(x.DepartmentId.Value));
+         }
+
          if (!String.IsNullOrEmpty(request.FileNumber)) judgebooks = judgebooks.Where(x => x.FileNumber == request.FileNumber);
          
          if (!String.IsNullOrEmpty(request.Year)) judgebooks = judgebooks.Where(x => x.Year == request.Year);
@@ -138,7 +149,8 @@ namespace Web.Controllers.Api.Files
       {
          var types = await _judgebooksService.FetchTypesAsync();
          var departments = await _judgebooksService.FetchDepartmentsAsync();
-         return new JudgebookFilesIniAdminModel(departments.GetOrdered().MapViewModelList(_mapper), types.GetOrdered().MapViewModelList(_mapper));
+         int maxFileSize = _judgebookSettings.MaxFileSize;
+         return new JudgebookFilesIniAdminModel(departments.GetOrdered().MapViewModelList(_mapper), types.GetOrdered().MapViewModelList(_mapper), maxFileSize);
       }
 
 
@@ -162,7 +174,13 @@ namespace Web.Controllers.Api.Files
          if (entity.Reviewed) return false;
 
          if(User.HasRole(AppRoles.ChiefClerk)) return true;
-         return entity.CreatedBy == User.Id();
+         if (entity.CreatedBy == User.Id()) return true;
+         
+         if (User.DepartmentIds().HasItems() && entity.DepartmentId.HasValue)
+         { 
+            return User.DepartmentIds().Contains(entity.DepartmentId.Value);
+         }
+         return false;
       }
       bool CanDownload(IJudgebookFile entity) => CanEdit(entity);
       bool CanReview() => User.HasRole(AppRoles.Files) || User.HasRole(AppRoles.Dev);
@@ -253,7 +271,11 @@ namespace Web.Controllers.Api.Files
          string ext = Path.GetExtension(file.FileName);
          string fileName =  entry.CreateFileName() + ext;   //$"{entry.Year}_{entry.Category}_{entry.Num}";
 
-         return _fileStoragesService.Create(file, folderPath, fileName);
+         string path = _fileStoragesService.Create(file, folderPath, fileName);
+         byte[] bytes = _fileStoragesService.GetBytes(folderPath, fileName);
+         if (bytes == null) throw new UploadFileFailedException(folderPath, fileName);
+
+         return path;
       }
 
       async Task<JudgebookFileUploadResponse> AddOneAsync(JudgebookUploadRequest request, string ip)
@@ -277,6 +299,7 @@ namespace Web.Controllers.Api.Files
          try
          {
             string filePath = await SaveFileAsync(file!, entry);
+
             entry.FileName = Path.GetFileName(filePath);
             entry.Ext = Path.GetExtension(file!.FileName);
 
@@ -334,7 +357,7 @@ namespace Web.Controllers.Api.Files
          byte[] bytes;
          try
          {
-            bytes = _fileStoragesService.GetBytes(entity.DirectoryPath, entity.FileName);
+            bytes = _fileStoragesService.GetBytes(entity.DirectoryPath, entity.FileName); 
          }
          catch (Exception ex)
          {
@@ -344,6 +367,7 @@ namespace Web.Controllers.Api.Files
             }
             throw;
          }
+         
 
          if(entity.Reviewed) await _judgebooksService.AddDownloadRecordAsync(entity, User.Id(), RemoteIpAddress);
 
@@ -502,6 +526,10 @@ namespace Web.Controllers.Api.Files
          try
          {
             string destPath = _fileStoragesService.Move(sourceFolder, sourceFileName, destFolder, destFileName);
+            string fileName = Path.GetFileName(destPath);
+            string folderPath = Path.GetDirectoryName(destPath)!;
+            byte[] bytes = _fileStoragesService.GetBytes(folderPath, fileName);
+            if (bytes == null) throw new MoveFileFailedException(folderPath, fileName);
             return destPath;
          }
          catch (Exception ex)

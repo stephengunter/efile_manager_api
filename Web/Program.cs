@@ -14,6 +14,7 @@ using System.Text.Json.Serialization;
 using Infrastructure.Helpers;
 using ApplicationCore.Settings.Files;
 using QuestPDF.Infrastructure;
+using Microsoft.AspNetCore.Http.Features;
 
 Log.Logger = new LoggerConfiguration()
 	.MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Information)
@@ -89,6 +90,13 @@ try
 
 
 	builder.Services.AddSwagger(Configuration);
+
+   int maxFileSizeInMB = Configuration[$"{SettingsKeys.JudgebookFile}:MaxFileSize"]!.ToInt();
+	if (maxFileSizeInMB < 1) maxFileSizeInMB = 100;
+   builder.Services.Configure<FormOptions>(options =>
+	{
+		options.MultipartBodyLengthLimit = maxFileSizeInMB * 1024 * 1024;
+   });
 
    QuestPDF.Settings.License = LicenseType.Community;
 

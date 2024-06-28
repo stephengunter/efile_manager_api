@@ -8,6 +8,7 @@ public static class JwtClaimIdentifiers
 	public const string Provider = "provider";
 	public const string Picture = "picture";
 	public const string Name = "name";
+   public const string Departments = "departments";
 }
 
 public static class JwtClaims

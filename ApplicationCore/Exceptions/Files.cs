@@ -18,6 +18,17 @@ public class FileNotExistException : Exception
 
 }
 
+public class UploadFileFailedException : Exception
+{
+   public UploadFileFailedException(string folderPath, string fileName) : base($"UploadFileFailedException. folderPath: {folderPath}  fileName: {fileName}")
+   {
+      FolderPath = folderPath;
+      FileName = fileName;
+   }
+   public string FolderPath { get; set; }
+   public string FileName { get; set; }
+}
+
 public class MoveFileFailedException : Exception
 {
    public MoveFileFailedException(string source, string dest) : base($"MoveFileFailedException. SourcePath: {source}  DestPath: {dest}")

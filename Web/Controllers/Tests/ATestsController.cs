@@ -16,21 +16,59 @@ using ApplicationCore.Services.Files;
 using ApplicationCore.Helpers.Files;
 using ApplicationCore.Consts;
 using System.Data;
+using ApplicationCore.Models.Files;
+using ApplicationCore.Exceptions;
+using Ardalis.Specification;
 
 namespace Web.Controllers.Tests;
 
 public class ATestsController : BaseTestController
 {
-   
-   public ATestsController()
+   private readonly IFileStoragesService _fileStoragesService;
+   private readonly IJudgebookFilesService _judgebooksService;
+
+   private readonly JudgebookFileSettings _judgebookSettings;
+   public ATestsController(IJudgebookFilesService judgebooksService, IOptions<JudgebookFileSettings> judgebookSettings)
    {
-      
+      _judgebookSettings = judgebookSettings.Value;
+      _judgebooksService = judgebooksService;
+
+      if (String.IsNullOrEmpty(_judgebookSettings.Host))
+      {
+         _fileStoragesService = new LocalStoragesService(_judgebookSettings.Directory);
+      }
+      else
+      {
+         _fileStoragesService = new FtpStoragesService(_judgebookSettings.Host, _judgebookSettings.UserName,
+         _judgebookSettings.Password, _judgebookSettings.Directory);
+      }
    }
    [HttpGet]
    public async Task<ActionResult> Index()
    {
-     
-      return Ok();
+      JudgebookType? type = null;
+      Department? department = null;
+      string include = "type,department";
+      var judgebooks = await _judgebooksService.FetchAllAsync();
+
+      var ids = new List<int>();
+      foreach (var judgebook in judgebooks)
+      { 
+         if(!judgebook.Removed)
+         {
+            byte[] bytes;
+            try
+            {
+               bytes = _fileStoragesService.GetBytes(judgebook.DirectoryPath, judgebook.FileName);
+            }
+            catch (Exception ex)
+            {
+               ids.Add(judgebook.Id);
+            }
+
+         }
+      }
+      return Ok(ids);
    }
 
 

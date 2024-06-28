@@ -16,6 +16,9 @@ using System.Data;
 using ApplicationCore.Views.Jud;
 using Newtonsoft.Json;
 using System.Net;
+using ApplicationCore.Migrations;
+using ApplicationCore.Models.Files;
+using ApplicationCore.Services.Files;
 
 namespace Web.Controllers;
 
@@ -29,15 +32,17 @@ public class AuthTokenController : BaseController
    private readonly IUsersService _usersService;
    private readonly IProfilesService _profilesService;
    private readonly IJwtTokenService _jwtTokenService;
+   private readonly IJudgebookFilesService _judgebooksService;
 
    public AuthTokenController(IOptions<AppSettings> appSettings, IOptions<Jud3Settings> jud3Settings, 
-		IAuthTokenService authTokenService, IJwtTokenService jwtTokenService, 
+		IAuthTokenService authTokenService, IJwtTokenService jwtTokenService, IJudgebookFilesService judgebooksService,
       IUsersService usersService, IProfilesService profilesService)
 	{
       _appSettingss = appSettings.Value;
       _jud3Settings = jud3Settings.Value;
       _authTokenService = authTokenService;
       _usersService = usersService;
+      _judgebooksService = judgebooksService;
       _profilesService = profilesService;
       _jwtTokenService = jwtTokenService;
    }
@@ -144,9 +149,21 @@ public class AuthTokenController : BaseController
    {
       var roles = await _usersService.GetRolesAsync(user);
 
+      var departments = new List<Department>();
+      if (!adUsers.IsNullOrEmpty()) 
+      {
+         var dpts = adUsers.Select(ad => ad.dpt).Distinct();
+         foreach (var dpt in dpts) 
+         {
+            var department = await _judgebooksService.FindDepartmentByTitleAsync(dpt);
+            if(department != null) departments.Add(department);
+         }
+      }
+      
+
       var accessToken = adUsers.IsNullOrEmpty() ?
                         await _jwtTokenService.CreateAccessTokenAsync(RemoteIpAddress, user, roles)
-                        : await _jwtTokenService.CreateAccessTokenAsync(RemoteIpAddress, user, roles, adUsers!);
+                        : await _jwtTokenService.CreateAccessTokenAsync(RemoteIpAddress, user, roles, departments!);
       string refreshToken = await _jwtTokenService.CreateRefreshTokenAsync(RemoteIpAddress, user);
 
       return new AuthResponse(accessToken.Token, accessToken.ExpiresIn, refreshToken);

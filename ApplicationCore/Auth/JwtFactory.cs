@@ -9,13 +9,14 @@ using ApplicationCore.Consts;
 using System.Security.Principal;
 using ApplicationCore.Models.Auth;
 using ApplicationCore.Views.Jud;
+using ApplicationCore.Models.Files;
 
 
 namespace ApplicationCore.Auth;
 public interface IJwtFactory
 {
    Task<AccessToken> GenerateEncodedTokenAsync(User user, IList<string>? roles, OAuth? oAuth = null);
-   Task<AccessToken> GenerateEncodedTokenAsync(User user, IList<string>? roles, IList<AdUserViewModel> adUsers);
+   Task<AccessToken> GenerateEncodedTokenAsync(User user, IList<string>? roles, IList<Department> departments);
 }
 
 
@@ -30,9 +31,9 @@ public class JwtFactory : IJwtFactory
       _jwtOptions = jwtOptions.Value;
       ThrowIfInvalidOptions(_jwtOptions);
    }
-   public async Task<AccessToken> GenerateEncodedTokenAsync(User user, IList<string>? roles, IList<AdUserViewModel> adUsers)
+   public async Task<AccessToken> GenerateEncodedTokenAsync(User user, IList<string>? roles, IList<Department> departments)
    {
-      var dpts = adUsers.Select(ad => ad.dpt).JoinToString();
+      var dpts = departments.Select(d => d.Id).ToList().JoinToStringIntegers();
       var claims = new List<Claim>()
       {
          new Claim(JwtClaimIdentifiers.Sub, user.UserName!),
@@ -41,7 +42,7 @@ public class JwtFactory : IJwtFactory
          new Claim(JwtRegisteredClaimNames.Jti, await _jwtOptions.JtiGenerator()),
          new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64),
          new Claim(JwtClaimIdentifiers.Name, user.Name),
-         new Claim("ad_dpts", dpts)
+         new Claim(JwtClaimIdentifiers.Departments, dpts)
       };
 
 
