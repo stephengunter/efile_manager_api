@@ -219,8 +219,8 @@ namespace Web.Controllers.Api.Files
 
          if (model.File == null)
          {
-            bool sameCase = entity.IsSameCase(cloneEntity);
-            if (!sameCase)
+            bool sameDestFolder = entity.IsSameDestFolder(cloneEntity);
+            if (!sameDestFolder)
             {
                string destPath = await MoveFileAsync(entity, removed: false);
 
@@ -272,8 +272,8 @@ namespace Web.Controllers.Api.Files
          string fileName =  entry.CreateFileName() + ext;   //$"{entry.Year}_{entry.Category}_{entry.Num}";
 
          string path = _fileStoragesService.Create(file, folderPath, fileName);
-         byte[] bytes = _fileStoragesService.GetBytes(folderPath, fileName);
-         if (bytes == null) throw new UploadFileFailedException(folderPath, fileName);
+         //byte[] bytes = _fileStoragesService.GetBytes(folderPath, fileName);
+         //if (bytes == null) throw new UploadFileFailedException(folderPath, fileName);
 
          return path;
       }
@@ -526,10 +526,10 @@ namespace Web.Controllers.Api.Files
          try
          {
             string destPath = _fileStoragesService.Move(sourceFolder, sourceFileName, destFolder, destFileName);
-            string fileName = Path.GetFileName(destPath);
-            string folderPath = Path.GetDirectoryName(destPath)!;
-            byte[] bytes = _fileStoragesService.GetBytes(folderPath, fileName);
-            if (bytes == null) throw new MoveFileFailedException(folderPath, fileName);
+            //string fileName = Path.GetFileName(destPath);
+            //string folderPath = Path.GetDirectoryName(destPath)!;
+            //byte[] bytes = _fileStoragesService.GetBytes(folderPath, fileName);
+            //if (bytes == null) throw new MoveFileFailedException(folderPath, fileName);
             return destPath;
          }
          catch (Exception ex)
@@ -583,7 +583,7 @@ namespace Web.Controllers.Api.Files
          else
          {
             long fileSize = file!.Length; // Size of the file in bytes
-            long maxFileSize = 250 * 1024 * 1024; // 250 MB (in bytes)
+            long maxFileSize = 100 * 1024 * 1024; // 100 MB (in bytes)
             if (fileSize > maxFileSize) errors.Add("file", "ÀÉ®×¹L¤j");
          }
 

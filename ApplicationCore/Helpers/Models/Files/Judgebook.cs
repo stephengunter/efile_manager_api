@@ -86,10 +86,16 @@ public static class JudgebookFileHelpers
       return $"{entry.Year}_{entry.Category}_{entry.Num}";
    }
 
-   public static bool IsSameCase(this JudgebookFile entry, IJudgebookFile model)
-   { 
-      return (entry.DepartmentId == model.DepartmentId) && (entry.TypeId == model.TypeId) && (entry.CourtType == model.CourtType) 
-               && (entry.Year == model.Year) && (entry.Category == model.Category) && (entry.Num == model.Num);
+   public static bool IsSameDestFolder(this JudgebookFile entry, IJudgebookFile model)
+   {
+      if (entry.CourtType != model.CourtType) return false;
+      if (entry.DepartmentId != model.DepartmentId) return false;
+
+      return IsSameCaseNumber(entry, model);
+   }
+   public static bool IsSameCaseNumber(this JudgebookFile entry, IJudgebookFile model)
+   {
+      return (entry.Year == model.Year) && (entry.Category == model.Category) && (entry.Num == model.Num);
 
    }
 
